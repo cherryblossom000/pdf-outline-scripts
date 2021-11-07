@@ -1,0 +1,6 @@
+.history/
+__pycache__/
+.DS_Store
+
+*.pdf
+/lib/private.py
