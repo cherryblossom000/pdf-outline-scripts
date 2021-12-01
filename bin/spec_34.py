@@ -16,6 +16,7 @@ chapters = [
     C(13, EC("Preliminary topics", [
         E(14, "Circular functions", 23),
         E(26, "The sine and cosine rules", 30),
+        E(31, "Geometry prerequisites", 33),
         E(35, "Sequences and series", 42),
         E(43, "The modulus function", 47),
         E(48, "Circles", 49),
