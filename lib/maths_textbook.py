@@ -217,10 +217,13 @@ def _get_answer_outlines(answers: List[ChapterAnswers]) -> List[OutlineNode]:
         data = answer.data
 
         def children(chapter: Union[int, str]) -> List[OutlineNode]:
+            def format_answer(answer: _AnswerExercise) -> str:
+                return REVIEW if answer == REVIEW else f"{chapter}{answer}"
+
             return [
                 OutlineNode(
                     exercise.page,
-                    f'{chapter}{exercise.start}{"" if exercise.end is None else f"–{exercise.end}"}',
+                    f'{format_answer(exercise.start)}{"" if exercise.end is None else f"–{format_answer(exercise.end)}"}',
                 )
                 for exercise in data
             ]
