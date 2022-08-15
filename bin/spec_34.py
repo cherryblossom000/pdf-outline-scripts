@@ -113,7 +113,7 @@ chapters = [
     C(589, RC(592, 598)),
     C(604, EC("Linear combinations of random variables and distribution of sample means", [
         E(605, "Linear combinations of random variables", 611),
-        E(613, "Linear combinations of independent normal random variables", 615),
+        E(613, "Linear combinations of independent normal random variables", 614),
         E(615, "Simulating the distribution of sample means", 620),
         E(620, "The distribution of the sample mean of a normally distributed random variable", 624),
         E(626, "The central limit theorem", 631),
