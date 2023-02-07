@@ -1,4 +1,4 @@
-# python -m bin.methods_34
+# python -m bin.2016.methods_34
 
 from lib.maths_textbook import (
     Chapter as C,

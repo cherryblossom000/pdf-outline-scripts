@@ -193,6 +193,7 @@ _AnswerData = Union[List[ExercisesAnswer], _Review]
 @dataclass
 class ChapterAnswers(WithPage):
     data: _AnswerData
+    appendix_name: Optional[_Letter] = None
 
 
 def _is_appendix_answer(answers: List[ExercisesAnswer]) -> bool:
@@ -229,7 +230,7 @@ def _get_answer_outlines(answers: List[ChapterAnswers]) -> List[OutlineNode]:
             ]
 
         if _is_appendix_answer(data):
-            letter = _to_letter(appendices_indices.index(i))
+            letter = answer.appendix_name or _to_letter(appendices_indices.index(i))
             return OutlineNode(page, f"Appendix {letter}", children(letter))
         return OutlineNode(page, f"Chapter {number}", children(number))
 
@@ -239,10 +240,38 @@ def _get_answer_outlines(answers: List[ChapterAnswers]) -> List[OutlineNode]:
 # endregion
 
 
+def add_custom_maths_textbook_outlines(
+    input: Path,
+    output: Path,
+    outlines: List[OutlineNode],
+    answers_outlines: List[OutlineNode],
+    answers_start_page: int,
+):
+    with pikepdf.open(input) as pdf:
+        add_outlines(
+            pdf,
+            output,
+            outlines,
+            "main PDF",
+        )
+
+        with pikepdf.new() as answers_pdf:
+            answers_pdf.pages.extend(pdf.pages[answers_start_page - 1 :])
+            add_outlines(
+                answers_pdf,
+                output.parent.joinpath(f"Answers {output.name}"),
+                # Adjust page numbers
+                (
+                    n.map(lambda page, label: (page - answers_start_page + 1, label))
+                    for n in answers_outlines
+                ),
+                "answers PDF",
+            )
+
+
 def add_maths_textbook_outlines(
     input: Path,
     output: Path,
-    answers_output: Path,
     introduction: int,
     acknowledgments: int,
     overview: int,
@@ -254,35 +283,36 @@ def add_maths_textbook_outlines(
 ):
     answer_outlines = _get_answer_outlines(answers)
     answers_start_page = answers[0].page
+    add_custom_maths_textbook_outlines(
+        input,
+        output,
+        [
+            OutlineNode(contents, "Contents"),
+            OutlineNode(introduction, "Introduction"),
+            OutlineNode(acknowledgments, "Acknowledgments"),
+            OutlineNode(
+                overview,
+                "An overview of the Cambridge complete teacher and learning resource",
+            ),
+        ]
+        + _get_chapter_outlines(chapters, final_revision)
+        + [OutlineNode(glossary, "Glossary")]
+        + [OutlineNode(answers_start_page, "Answers", answer_outlines)],
+        answer_outlines,
+        answers[0].page,
+    )
+
+
+# The 2023 textbooks come with outlines for the main textbook
+# but the answers is just a single node 'Answers'
+def add_maths_textbook_answers_outlines(
+    input: Path, output: Path, answers: List[ChapterAnswers]
+):
     with pikepdf.open(input) as pdf:
         add_outlines(
             pdf,
             output,
-            [
-                OutlineNode(contents, "Contents"),
-                OutlineNode(introduction, "Introduction"),
-                OutlineNode(acknowledgments, "Acknowledgments"),
-                OutlineNode(
-                    overview,
-                    "An overview of the Cambridge complete teacher and learning resource",
-                ),
-            ]
-            + _get_chapter_outlines(chapters, final_revision)
-            + [OutlineNode(glossary, "Glossary")]
-            + [OutlineNode(answers_start_page, "Answers", answer_outlines)],
-            "main PDF",
-        )
-
-        answers_pdf = pikepdf.new()
-        answers_pdf.pages.extend(pdf.pages[answers_start_page - 1 :])
-        add_outlines(
-            answers_pdf,
-            answers_output,
-            # Adjust page numbers
-            (
-                n.map(lambda page, label: (page - answers_start_page + 1, label))
-                for n in answer_outlines
-            ),
+            _get_answer_outlines(answers),
             "answers PDF",
         )
 
