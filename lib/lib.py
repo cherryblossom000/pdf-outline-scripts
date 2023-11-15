@@ -1,14 +1,9 @@
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import (
-	Callable,
-	Iterable,
-	List,
-	Tuple,
-	Union,
-)
-from . import pikepdf
-from .pikepdf import OutlineItem, Pdf
+from typing import Callable
+import pikepdf
+from pikepdf import OutlineItem, Pdf
 
 
 @dataclass
@@ -20,9 +15,9 @@ class WithPage:
 @dataclass
 class OutlineNode(WithPage):
 	label: str
-	children: List["OutlineNode"] = field(default_factory=list)
+	children: list["OutlineNode"] = field(default_factory=list)
 
-	def map(self, fn: Callable[[int, str], Tuple[int, str]]) -> "OutlineNode":
+	def map(self, fn: Callable[[int, str], tuple[int, str]]) -> "OutlineNode":
 		page, label = fn(self.page, self.label)
 		return OutlineNode(page, label, list(n.map(fn) for n in self.children))
 
@@ -34,7 +29,7 @@ def _to_outline(node: OutlineNode) -> OutlineItem:
 
 
 def add_outlines(
-	input: Union[Path, Pdf],
+	input: Path | Pdf,
 	output: Path,
 	outlines: Iterable[OutlineNode],
 	description: str = "PDF",

@@ -1,29 +1,26 @@
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import (
 	Callable,
 	Final,
-	Iterable,
-	List,
 	Literal,
-	Optional,
-	TypeVar,
-	Union,
 )
-from .lib import OutlineNode, WithPage, add_outlines, pikepdf
 
-_T = TypeVar("_T", contravariant=True)
+import pikepdf
+
+from .lib import OutlineNode, WithPage, add_outlines
 
 
-def _filter_indices(
-	predicate: Callable[[int, _T], bool], iterable: Iterable[_T]
-) -> List[int]:
+def _filter_indices[
+	T
+](predicate: Callable[[int, T], bool], iterable: Iterable[T]) -> list[int]:
 	return [i for i, x in enumerate(iterable) if predicate(i, x)]
 
 
-def _last_index(
-	predicate: Callable[[int, _T], bool], iterable: Iterable[_T]
-) -> Optional[int]:
+def _last_index[
+	T
+](predicate: Callable[[int, T], bool], iterable: Iterable[T]) -> int | None:
 	return next(reversed(_filter_indices(predicate, iterable)), None)
 
 
@@ -38,14 +35,14 @@ def _to_letter(number: int) -> str:
 class Exercise:
 	start_page: int
 	name: str
-	exercise_page: Optional[int] = None
+	exercise_page: int | None = None
 
 
 @dataclass
 class ExercisesChapter:
 	name: str
-	exercises: List[Exercise] = field(default_factory=list)
-	review_page: Optional[int] = None
+	exercises: list[Exercise] = field(default_factory=list)
+	review_page: int | None = None
 
 
 @dataclass
@@ -54,7 +51,7 @@ class RevisionChapter:
 	extended_response_page: int
 
 
-_ChapterData = Union[ExercisesChapter, RevisionChapter]
+_ChapterData = ExercisesChapter | RevisionChapter
 
 
 @dataclass
@@ -67,8 +64,8 @@ def _revision_title(start: int, end: int) -> str:
 
 
 def _get_chapter_outlines(
-	chapters: List[Chapter], final_revision: bool
-) -> List[OutlineNode]:
+	chapters: list[Chapter], final_revision: bool
+) -> list[OutlineNode]:
 	if final_revision:
 		last_revision_index = _last_index(
 			lambda _, chapter: isinstance(chapter.data, RevisionChapter), chapters
@@ -87,7 +84,7 @@ def _get_chapter_outlines(
 
 		title_prefix: str
 		title: str
-		children: List[OutlineNode]
+		children: list[OutlineNode]
 
 		if isinstance(data, ExercisesChapter):
 			# e.g. Chapter 1: Preliminary topics
@@ -96,7 +93,7 @@ def _get_chapter_outlines(
 
 			def exercise_outlines(
 				get_exercise_str: Callable[[int], str]
-			) -> List[OutlineNode]:
+			) -> list[OutlineNode]:
 				def exercise_outline(j: int, exercise: Exercise) -> OutlineNode:
 					exercise_str = get_exercise_str(j)
 					return OutlineNode(
@@ -176,7 +173,7 @@ def _get_chapter_outlines(
 
 _Review = Literal["Review"]
 _Letter = Literal["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"]
-_AnswerExercise = Union[_Letter, _Review, int]
+_AnswerExercise = _Letter | _Review | int
 REVIEW: Final[_Review] = "Review"
 
 
@@ -184,24 +181,24 @@ REVIEW: Final[_Review] = "Review"
 class ExercisesAnswer:
 	page: int
 	start: _AnswerExercise
-	end: Optional[_AnswerExercise] = None
+	end: _AnswerExercise | None = None
 
 
-_AnswerData = Union[List[ExercisesAnswer], _Review]
+_AnswerData = list[ExercisesAnswer] | _Review
 
 
 @dataclass
 class ChapterAnswers(WithPage):
 	data: _AnswerData
-	appendix_name: Optional[_Letter] = None
+	appendix_name: _Letter | None = None
 
 
-def _is_appendix_answer(answers: List[ExercisesAnswer]) -> bool:
+def _is_appendix_answer(answers: list[ExercisesAnswer]) -> bool:
 	# Appendices don't have a review, so neither do the answers
 	return all(answer.start != REVIEW and answer.end != REVIEW for answer in answers)
 
 
-def _get_answer_outlines(answers: List[ChapterAnswers]) -> List[OutlineNode]:
+def _get_answer_outlines(answers: list[ChapterAnswers]) -> list[OutlineNode]:
 	appendices_indices = _filter_indices(
 		lambda _, answer: answer.data != REVIEW and _is_appendix_answer(answer.data),
 		answers,
@@ -217,7 +214,7 @@ def _get_answer_outlines(answers: List[ChapterAnswers]) -> List[OutlineNode]:
 
 		data = answer.data
 
-		def children(chapter: Union[int, str]) -> List[OutlineNode]:
+		def children(chapter: int | str) -> list[OutlineNode]:
 			def format_answer(answer: _AnswerExercise) -> str:
 				return REVIEW if answer == REVIEW else f"{chapter}{answer}"
 
@@ -243,8 +240,8 @@ def _get_answer_outlines(answers: List[ChapterAnswers]) -> List[OutlineNode]:
 def add_custom_maths_textbook_outlines(
 	input: Path,
 	output: Path,
-	outlines: List[OutlineNode],
-	answers_outlines: List[OutlineNode],
+	outlines: list[OutlineNode],
+	answers_outlines: list[OutlineNode],
 	answers_start_page: int,
 ):
 	with pikepdf.open(input) as pdf:
@@ -276,8 +273,8 @@ def add_maths_textbook_outlines(
 	acknowledgments: int,
 	overview: int,
 	glossary: int,
-	chapters: List[Chapter],
-	answers: List[ChapterAnswers],
+	chapters: list[Chapter],
+	answers: list[ChapterAnswers],
 	contents: int = 3,
 	final_revision: bool = True,
 ):
@@ -306,7 +303,7 @@ def add_maths_textbook_outlines(
 # The 2023 textbooks come with outlines for the main textbook
 # but the answers is just a single node 'Answers'
 def add_maths_textbook_answers_outlines(
-	input: Path, output: Path, answers: List[ChapterAnswers]
+	input: Path, output: Path, answers: list[ChapterAnswers]
 ):
 	with pikepdf.open(input) as pdf:
 		add_outlines(

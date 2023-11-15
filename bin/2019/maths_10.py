@@ -1,4 +1,4 @@
-# python -m bin.2019.10
+# python -m bin.2019.maths_10
 
 from lib.lib import OutlineNode as O
 from lib.maths_textbook import add_custom_maths_textbook_outlines

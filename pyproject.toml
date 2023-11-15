@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "pdf-outline-scripts"
+version = "0.1.0"
+description = ""
+authors = ["Lauren Yim"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pikepdf = "^8.7.1"
+
+[tool.poetry.group.dev.dependencies]
+black-tabby-formatter = "^0.1.1"
+ruff = "^0.1.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
